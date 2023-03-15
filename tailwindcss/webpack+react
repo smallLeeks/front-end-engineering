@@ -1,0 +1,77 @@
+### 非 create-react-app 脚手架配置 tailwindcss
+
+说明：webpack@5.x + react
+
+1、[官方文档链接](https://tailwindcss.com/docs/installation)
+
+2、安装依赖
+```
+$ npm i tailwindcss@latest postcss@latest postcss-loader@latest autoprefixer@latest -D
+
+tailwindcss      Tailwind CSS 的核心包
+postcss          css 解析成语法树
+autoprefixer     PostCSS 插件，Tailwind CSS 使用它来自动添加个前缀以编写所有浏览器支持的样式
+postcss-loader   webpack 用来处理 PostCSS
+```
+
+3. 自动生成 tailwind.config.js 配置文件
+```
+$ npx tailwindcss init 项目更目录生成 tailwind.config.js 配置文件
+
+module.exports = {
+    content: ['./src/**/*.{js,jsx,ts,tsx}'],
+    // darkMode: false, // or 'media' or 'class'
+    theme: {
+        extend: {},
+    },
+    variants: {
+        extend: {},
+    },
+    // 禁用掉 Tailwind 默认生成的类
+    corePlugins: {
+        preflight: false, // 与 antd 样式冲突，关闭 Tailwind's base/reset styles
+    },
+    plugins: [],
+};
+```
+
+4. 根目录新建 postcss.config.js
+```
+const tailwindcss = require('tailwindcss');
+const autoprefixer = require('autoprefixer');
+
+module.exports = {
+    plugins: [tailwindcss('./tailwind.config.js'), autoprefixer],
+};
+```
+
+5. webpack 配置
+说明：这里 @tailwind 是 tailwindcss 的语法糖，不是 css 语法，所以 css-loader并不能直接解析它。正确流程是通过 PostCSS 的 tailwindcss 插件处理好以后，再传给 css-loader，所以 loader配置如下
+
+```
+{
+    test: /\.css$/,
+    use: [
+        MiniCssExtractPlugin.loader,
+        {
+            loader: 'thread-loader',
+            options: WorkerPool,
+        },
+        {
+            loader: 'css-loader',
+            options: {
+                sourceMap: isProd ? false : true,
+                importLoaders: 1,
+            },
+        },
+        'postcss-loader',
+    ],
+}
+```
+
+6. 新建 tailwind.css，然后入口文件引用此 css 文件
+```
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+```
